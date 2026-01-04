@@ -12,6 +12,7 @@
 package org.rosterleague.common;
 
 import java.util.List;
+import org.rosterleague.entities.Match;
 
 
 public interface Request {
@@ -64,4 +65,11 @@ public interface Request {
     void removeTeam(String teamId);
 
     void clearAllEntities();
+
+    // Metode noi pentru meciuri
+    void createMatch(String homeTeamId, String awayTeamId, int homeScore, int awayScore, String leagueId);
+
+    List<Match> getMatchesOfTeam(String teamId);
+
+    List<Match> getMatchesOfLeague(String leagueId);
 }

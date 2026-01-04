@@ -21,6 +21,7 @@ public class MainServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ejbRequest.clearAllEntities();
         insertInfo();
+        addTestMatches();  // ADĂUGAT!
 
         printer = response.getWriter();
         response.setContentType("text/plain");
@@ -167,6 +168,27 @@ public class MainServlet extends HttpServlet {
 
         } catch (Exception ex) {
             printer.println("Caught an exception: " + ex.getClass() + " : " + ex.getMessage());
+            ex.printStackTrace(printer);
+        }
+    }
+
+    private void addTestMatches() {
+        try {
+            // Meciuri pentru Liga L1 (Soccer)
+            ejbRequest.createMatch("T1", "T2", 3, 1, "L1");
+            ejbRequest.createMatch("T5", "T1", 0, 2, "L1");
+            ejbRequest.createMatch("T2", "T5", 2, 2, "L1");
+            ejbRequest.createMatch("T1", "T5", 4, 0, "L1");
+            ejbRequest.createMatch("T2", "T1", 1, 1, "L1");
+            ejbRequest.createMatch("T5", "T2", 0, 3, "L1");
+
+            // Meciuri pentru Liga L2 (Basketball)
+            ejbRequest.createMatch("T3", "T4", 85, 78, "L2");
+            ejbRequest.createMatch("T4", "T3", 92, 88, "L2");
+            ejbRequest.createMatch("T3", "T4", 76, 76, "L2");
+
+        } catch (Exception ex) {
+            printer.println("Caught an exception adding matches: " + ex.getClass() + " : " + ex.getMessage());
             ex.printStackTrace(printer);
         }
     }

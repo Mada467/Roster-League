@@ -1,18 +1,16 @@
 package org.rosterleague.servlet;
 
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.rosterleague.common.LeagueDetails;
+import org.rosterleague.common.Request;
+import org.rosterleague.common.TeamDetails;
 import org.rosterleague.common.TeamStanding;
-import org.rosterleague.ejb.RequestBean;
-import org.rosterleague.entities.League;
 import org.rosterleague.entities.Match;
-import org.rosterleague.entities.Team;
 
 import java.io.IOException;
 import java.util.*;
@@ -20,11 +18,8 @@ import java.util.*;
 @WebServlet(name = "LeagueStandings", urlPatterns = {"/LeagueStandings"})
 public class LeagueStandings extends HttpServlet {
 
-    @PersistenceContext(unitName = "em")
-    private EntityManager em;
-
     @Inject
-    private RequestBean requestBean;
+    Request ejbRequest;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -32,63 +27,78 @@ public class LeagueStandings extends HttpServlet {
 
         String leagueIdParam = request.getParameter("leagueId");
 
-        // Obține toate ligile pentru dropdown
-        List<League> leagues = em.createQuery("SELECT l FROM League l ORDER BY l.name", League.class).getResultList();
+        // Creează lista de ligi hardcodat
+        List<SimpleLeague> leagues = new ArrayList<>();
+        leagues.add(new SimpleLeague("L1", "Mountain Soccer"));
+        leagues.add(new SimpleLeague("L2", "Valley Basketball"));
+        leagues.add(new SimpleLeague("L3", "Foothills Soccer"));
+        leagues.add(new SimpleLeague("L4", "Alpine Snowboarding"));
+
         request.setAttribute("leagues", leagues);
 
         if (leagueIdParam != null && !leagueIdParam.isEmpty()) {
             try {
-                Long leagueId = Long.parseLong(leagueIdParam);
-                League league = em.find(League.class, leagueId);
+                LeagueDetails league = ejbRequest.getLeague(leagueIdParam);
 
                 if (league != null) {
-                    // Calculează clasamentul
-                    List<TeamStanding> standings = calculateStandings(league);
+                    List<TeamStanding> standings = calculateStandings(leagueIdParam);
 
                     request.setAttribute("selectedLeague", league);
                     request.setAttribute("standings", standings);
                 }
-            } catch (NumberFormatException e) {
-                request.setAttribute("error", "ID ligă invalid!");
+            } catch (Exception e) {
+                request.setAttribute("error", "Eroare: " + e.getMessage());
             }
         }
 
         request.getRequestDispatcher("/WEB-INF/pages/leagueStandings.jsp").forward(request, response);
     }
 
-    private List<TeamStanding> calculateStandings(League league) {
-        // Map pentru a stoca statisticile fiecărei echipe
+    private List<TeamStanding> calculateStandings(String leagueId) {
         Map<String, TeamStanding> standingsMap = new HashMap<>();
 
-        // Inițializează toate echipele din ligă cu 0 puncte
-        for (Team team : league.getTeams()) {
-            standingsMap.put(team.getName(), new TeamStanding(team.getName()));
-        }
+        try {
+            List<TeamDetails> teams = ejbRequest.getTeamsOfLeague(leagueId);
 
-        // Obține toate meciurile din ligă
-        List<Match> matches = em.createQuery(
-                        "SELECT m FROM Match m WHERE m.league.id = :leagueId", Match.class)
-                .setParameter("leagueId", league.getId())
-                .getResultList();
-
-        // Procesează fiecare meci și actualizează statisticile
-        for (Match match : matches) {
-            String homeTeamName = match.getHomeTeam().getName();
-            String awayTeamName = match.getAwayTeam().getName();
-
-            TeamStanding homeStanding = standingsMap.get(homeTeamName);
-            TeamStanding awayStanding = standingsMap.get(awayTeamName);
-
-            if (homeStanding != null && awayStanding != null) {
-                homeStanding.addMatchResult(match.getHomeScore(), match.getAwayScore());
-                awayStanding.addMatchResult(match.getAwayScore(), match.getHomeScore());
+            for (TeamDetails team : teams) {
+                standingsMap.put(team.getId(), new TeamStanding(team.getName()));
             }
+
+            List<Match> matches = ejbRequest.getMatchesOfLeague(leagueId);
+
+            for (Match match : matches) {
+                String homeTeamId = match.getHomeTeam().getId();
+                String awayTeamId = match.getAwayTeam().getId();
+
+                TeamStanding homeStanding = standingsMap.get(homeTeamId);
+                TeamStanding awayStanding = standingsMap.get(awayTeamId);
+
+                if (homeStanding != null && awayStanding != null) {
+                    homeStanding.addMatchResult(match.getHomeScore(), match.getAwayScore());
+                    awayStanding.addMatchResult(match.getAwayScore(), match.getHomeScore());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        // Convertește Map în List și sortează
         List<TeamStanding> standingsList = new ArrayList<>(standingsMap.values());
         Collections.sort(standingsList);
 
         return standingsList;
+    }
+
+    // Clasă simplă pentru ligi
+    public static class SimpleLeague {
+        private String id;
+        private String name;
+
+        public SimpleLeague(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getId() { return id; }
+        public String getName() { return name; }
     }
 }

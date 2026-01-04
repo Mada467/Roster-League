@@ -512,6 +512,7 @@ public class RequestBean implements Request, Serializable {
 
     @Override
     public void clearAllEntities() {
+        em.createQuery("DELETE FROM Match").executeUpdate();
         em.createQuery("DELETE FROM Player").executeUpdate();
         em.createQuery("DELETE FROM Team").executeUpdate();
         em.createQuery("DELETE FROM League").executeUpdate();
@@ -524,5 +525,60 @@ public class RequestBean implements Request, Serializable {
             detailsList.add(playerDetails);
         }
         return detailsList;
+    }
+
+    // ===== METODE NOI PENTRU MECIURI =====
+
+    @Override
+    public void createMatch(String homeTeamId, String awayTeamId, int homeScore, int awayScore, String leagueId) {
+        logger.info("createMatch");
+        try {
+            Team homeTeam = em.find(Team.class, homeTeamId);
+            Team awayTeam = em.find(Team.class, awayTeamId);
+            League league = em.find(League.class, leagueId);
+
+            if (homeTeam == null || awayTeam == null || league == null) {
+                throw new EJBException("Team or League not found");
+            }
+
+            Match match = new Match(homeTeam, awayTeam, homeScore, awayScore, league);
+            em.persist(match);
+        } catch (Exception ex) {
+            throw new EJBException(ex);
+        }
+    }
+
+    @Override
+    public List<Match> getMatchesOfTeam(String teamId) {
+        logger.info("getMatchesOfTeam");
+        List<Match> matches = null;
+
+        try {
+            TypedQuery<Match> q = em.createQuery(
+                    "SELECT m FROM Match m WHERE m.homeTeam.id = :teamId OR m.awayTeam.id = :teamId ORDER BY m.id DESC",
+                    Match.class);
+            q.setParameter("teamId", teamId);
+            matches = q.getResultList();
+        } catch (Exception ex) {
+            throw new EJBException(ex);
+        }
+        return matches;
+    }
+
+    @Override
+    public List<Match> getMatchesOfLeague(String leagueId) {
+        logger.info("getMatchesOfLeague");
+        List<Match> matches = null;
+
+        try {
+            TypedQuery<Match> q = em.createQuery(
+                    "SELECT m FROM Match m WHERE m.league.id = :leagueId",
+                    Match.class);
+            q.setParameter("leagueId", leagueId);
+            matches = q.getResultList();
+        } catch (Exception ex) {
+            throw new EJBException(ex);
+        }
+        return matches;
     }
 }

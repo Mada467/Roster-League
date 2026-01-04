@@ -1,16 +1,14 @@
 package org.rosterleague.servlet;
 
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.rosterleague.ejb.RequestBean;
+import org.rosterleague.common.Request;
+import org.rosterleague.common.TeamDetails;
 import org.rosterleague.entities.Match;
-import org.rosterleague.entities.Team;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,11 +16,8 @@ import java.util.List;
 @WebServlet(name = "TeamMatches", urlPatterns = {"/TeamMatches"})
 public class TeamMatches extends HttpServlet {
 
-    @PersistenceContext(unitName = "em")
-    private EntityManager em;
-
     @Inject
-    private RequestBean requestBean;
+    Request ejbRequest;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -31,21 +26,24 @@ public class TeamMatches extends HttpServlet {
         String teamIdParam = request.getParameter("teamId");
 
         // Obține toate echipele pentru dropdown
-        List<Team> teams = em.createQuery("SELECT t FROM Team t ORDER BY t.name", Team.class).getResultList();
+        List<TeamDetails> teams = ejbRequest.getTeamsOfLeague("L1");
+        try {
+            teams.addAll(ejbRequest.getTeamsOfLeague("L2"));
+            teams.addAll(ejbRequest.getTeamsOfLeague("L3"));
+            teams.addAll(ejbRequest.getTeamsOfLeague("L4"));
+        } catch (Exception e) {
+            // Ignoră
+        }
+
         request.setAttribute("teams", teams);
 
         if (teamIdParam != null && !teamIdParam.isEmpty()) {
             try {
-                Long teamId = Long.parseLong(teamIdParam);
-                Team team = em.find(Team.class, teamId);
+                TeamDetails team = ejbRequest.getTeam(teamIdParam);
 
                 if (team != null) {
-                    // Obține toate meciurile în care echipa a jucat (acasă sau deplasare)
-                    List<Match> matches = em.createQuery(
-                                    "SELECT m FROM Match m WHERE m.homeTeam.id = :teamId OR m.awayTeam.id = :teamId ORDER BY m.id DESC",
-                                    Match.class)
-                            .setParameter("teamId", teamId)
-                            .getResultList();
+                    // Obține toate meciurile echipei
+                    List<Match> matches = ejbRequest.getMatchesOfTeam(teamIdParam);
 
                     // Calculează statistici
                     int totalMatches = matches.size();
@@ -57,7 +55,7 @@ public class TeamMatches extends HttpServlet {
                     int points = 0;
 
                     for (Match match : matches) {
-                        boolean isHome = match.getHomeTeam().getId().equals(teamId);
+                        boolean isHome = match.getHomeTeam().getId().equals(teamIdParam);
                         int teamGoals = isHome ? match.getHomeScore() : match.getAwayScore();
                         int opponentGoals = isHome ? match.getAwayScore() : match.getHomeScore();
 
@@ -86,8 +84,8 @@ public class TeamMatches extends HttpServlet {
                     request.setAttribute("goalDifference", goalsFor - goalsAgainst);
                     request.setAttribute("points", points);
                 }
-            } catch (NumberFormatException e) {
-                request.setAttribute("error", "ID echipă invalid!");
+            } catch (Exception e) {
+                request.setAttribute("error", "Eroare: " + e.getMessage());
             }
         }
 
