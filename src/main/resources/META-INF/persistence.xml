@@ -4,7 +4,7 @@
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
              version="3.0">
     <persistence-unit name="em" transaction-type="JTA">
-        <jta-data-source>java:comp/DefaultDataSource</jta-data-source>
+        <jta-data-source>jdbc/rosterleague</jta-data-source>
         <properties>
             <property name="jakarta.persistence.schema-generation.database.action"
                       value="drop-and-create"/>

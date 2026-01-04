@@ -3,8 +3,8 @@ plugins {
     id 'war'
 }
 
-group 'org.rosterleague'
-version '1.0-SNAPSHOT'
+group = 'org.rosterleague'
+version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -14,14 +14,17 @@ ext {
     junitVersion = '5.10.2'
 }
 
-sourceCompatibility = '21'
-targetCompatibility = '21'
+// Configurare compatibilitate Java în interiorul blocului java
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-// Configure JPA annotation processing to generate metamodel classes using EclipseLink
+// Configurare procesare adnotări JPA pentru EclipseLink
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += [
             '-processor', 'org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor',
@@ -30,12 +33,14 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
+    // Dependențe Jakarta EE 10 pentru GlassFish 7
     compileOnly('jakarta.platform:jakarta.jakartaee-api:10.0.0')
-    annotationProcessor('org.eclipse.persistence:org.eclipse.persistence.jpa.modelgen.processor:4.0.7')
+    annotationProcessor('org.eclipse.persistence:org.eclipse.persistence.jpa.modelgen.processor:4.0.2')
 
-    // another example of JPA annotation processor
-    // annotationProcessor('org.hibernate:hibernate-jpamodelgen:7.1.1.Final')
+    // MySQL Driver
+    implementation 'com.mysql:mysql-connector-j:8.2.0'
 
+    // Testare
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 }
