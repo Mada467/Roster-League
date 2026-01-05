@@ -1,18 +1,8 @@
-/*
- * Copyright (c), Eclipse Foundation, Inc. and its licensors.
- *
- * All rights reserved.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Distribution License v1.0, which is available at
- * https://www.eclipse.org/org/documents/edl-v10.php
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
 package org.rosterleague.entities;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList; // Am adăugat asta pentru inițializare
 import java.util.Collection;
 
 import jakarta.persistence.CascadeType;
@@ -21,17 +11,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-
 @Entity
 @Table(name = "PERSISTENCE_ROSTER_LEAGUE")
-public abstract class League implements Serializable {
+// AM STERS "abstract" de aici
+public class League implements Serializable {
     @Serial
     private static final long serialVersionUID = 5060910864394673463L;
+
     protected String id;
     protected String name;
     protected String sport;
-    protected Collection<Team> teams;
-        
+    // Este bine să inițializezi colecția ca să nu primești NullPointerException
+    protected Collection<Team> teams = new ArrayList<>();
+
     @Id
     public String getId() {
         return id;
@@ -65,13 +57,12 @@ public abstract class League implements Serializable {
     public void setTeams(Collection<Team> teams) {
         this.teams = teams;
     }
-    
+
     public void addTeam(Team team) {
         this.getTeams().add(team);
     }
-    
+
     public void dropTeam(Team team) {
         this.getTeams().remove(team);
     }
-    
 }

@@ -3,11 +3,23 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
              version="3.0">
+
     <persistence-unit name="em" transaction-type="JTA">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <jta-data-source>jdbc/rosterleague</jta-data-source>
+
+        <class>org.rosterleague.entities.League</class>
+        <class>org.rosterleague.entities.Team</class>
+        <class>org.rosterleague.entities.Player</class>
+        <class>org.rosterleague.entities.Match</class>
+        <class>org.rosterleague.entities.SummerLeague</class>
+        <class>org.rosterleague.entities.WinterLeague</class>
+
         <properties>
-            <property name="jakarta.persistence.schema-generation.database.action"
-                      value="drop-and-create"/>
+            <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
+
+            <property name="eclipselink.logging.level" value="FINE"/>
+            <property name="eclipselink.logging.parameters" value="true"/>
         </properties>
     </persistence-unit>
 </persistence>

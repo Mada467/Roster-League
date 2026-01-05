@@ -14,7 +14,6 @@ ext {
     junitVersion = '5.10.2'
 }
 
-// Configurare compatibilitate Java în interiorul blocului java
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -24,7 +23,6 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-// Configurare procesare adnotări JPA pentru EclipseLink
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += [
             '-processor', 'org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor',
@@ -33,8 +31,12 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
-    // Dependențe Jakarta EE 10 pentru GlassFish 7
+    // Dependențe Jakarta EE 10
     compileOnly('jakarta.platform:jakarta.jakartaee-api:10.0.0')
+
+    // ACEASTA ESTE LINIA NOUA care repară erorile din JSP
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
+
     annotationProcessor('org.eclipse.persistence:org.eclipse.persistence.jpa.modelgen.processor:4.0.2')
 
     // MySQL Driver

@@ -72,4 +72,6 @@ public interface Request {
     List<Match> getMatchesOfTeam(String teamId);
 
     List<Match> getMatchesOfLeague(String leagueId);
+
+    List<LeagueDetails> getAllLeagues();
 }
